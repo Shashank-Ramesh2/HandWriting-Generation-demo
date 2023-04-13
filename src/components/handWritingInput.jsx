@@ -9,10 +9,23 @@ const HandwritingInput = ({ onSend }) => {
   const [coordinates, setCoordinates] = useState([]);
   const [text, setText] = useState('');
 
+  const canvasOffSetX = useRef(null);
+  const canvasOffSetY = useRef(null);
+
   const handleMouseDown = (e) => {
+    const canvas = canvasRef.current;
+    const canvasOffSet = canvas.getBoundingClientRect();
+    canvasOffSetY.current = Math.round(canvasOffSet.top) + 4;
+    canvasOffSetX.current = Math.round(canvasOffSet.left) + 4;
+    console.log('Offset X in handlw mouse down', canvasOffSetX.current)
+    console.log('Offset Y in handlw mouse down', canvasOffSetY.current)
+    console.log('Event coordinates (' + e.clientX + ',' + e.clientY + ')')
+    let relativeX = e.clientX - canvasOffSetX.current;
+    let relativeY = e.clientY - canvasOffSetY.current;
+    console.log('Relative coordinates (' + relativeX + ',' + relativeY + ')')
     setIsDrawing(true);
-    setLastX(e.clientX);
-    setLastY(e.clientY);
+    setLastX(relativeX);
+    setLastY(relativeY);
     setCoordinates([...coordinates, { x: lastX, y: lastY }]);
   };
 
@@ -20,13 +33,29 @@ const HandwritingInput = ({ onSend }) => {
     if (!isDrawing) return;
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
-    context.lineWidth = 10;
+    // const canvasOffSet = canvas.getBoundingClientRect();
+    // canvasOffSetY.current = canvasOffSet.top;
+    // canvasOffSetX.current = canvasOffSet.left;
+    context.lineWidth = 2;
+    context.strokeStyle = 'black';
     context.beginPath();
+    /* ***Series of cosole logs ******/
+    console.log('Last coordinate (' + lastX + ',' + lastY + ')');
+    console.log('Event coordinates (' + e.clientX + ',' + e.clientY + ')')
+    console.log('Offset X in handlw mouse move', canvasOffSetX.current)
+    console.log('Offset Y in handlw mouse move', canvasOffSetY.current)
+    /* ***Series of cosole logs ends *****/
     context.moveTo(lastX, lastY);
-    context.lineTo(e.clientX, e.clientY);
+    let relativeX = e.clientX - canvasOffSetX.current;
+    let relativeY = e.clientY - canvasOffSetY.current;
+    context.lineTo(relativeX, relativeY);
     context.stroke();
-    setLastX(e.clientX);
-    setLastY(e.clientY);
+    //context.lineTo(e.clientX , e.clientY );
+    // console.log('e.Y '+e.clientY +' offset Y '+canvasOffSetY.current +'transformed crd ('+e.clientX - canvasOffSetX.current+','+e.clientY - canvasOffSetX.current+')')
+    //console.log('transformed crd ('+e.clientX - canvasOffSetX.current+','+e.clientY - canvasOffSetX.current+')')
+
+    setLastX(relativeX);
+    setLastY(relativeY);
     setCoordinates([...coordinates, { x: lastX, y: lastY }]);
   };
 
@@ -109,34 +138,36 @@ const HandwritingInput = ({ onSend }) => {
         const canvas = canvasRef.current;
         const imageDataUrl = canvas.toDataURL('image/png');
         onSend('image', coordinates, data.imageDataUrl);
-        console.log('Response from image BE'+ data.imageDataUrl );
+        console.log('Response from image BE' + data.imageDataUrl);
       }
       )
       .catch(error => console.log(error));
-    
+
   };
 
   return (
     <div>
+      {/* <button style={{ marginRight: '100px' }}></button> */}
       <canvas
         ref={canvasRef}
-        width={700}
-        height={250}
+        width={100}
+        height={100}
+
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         style={{ marginRight: '10px' }}
       />
       <button onClick={handleClear}>Reset</button>
-      <div>
+      <div >
         <label htmlFor="text-input">Text Input:</label>
         <br></br>
         <input style={{ marginRight: '10px' }} type="text" id="text-input" value={text} onChange={handleTextChange} />
-        <button style={{ marginRight: '10px' }} onClick={handleSendCoordinates}>Send as Coordinates</button>
+        {/* <button style={{ marginRight: '10px' }} onClick={handleSendCoordinates}>Send as Coordinates</button> */}
         <button onClick={handleSendImage}>Send as Image</button>
         <div>
-          <h1>Rendering the Coordinates</h1>
-          <button style={{ marginRight: '10px' }} onClick={renderCoordinates}>Render Coordinates</button>
+          <h1>Rendering VAE Output</h1>
+          {/* <button style={{ marginRight: '10px' }} onClick={renderCoordinates}>Render Coordinates</button> */}
           <button onClick={renderImage}>Render Image</button>
         </div>
       </div>
